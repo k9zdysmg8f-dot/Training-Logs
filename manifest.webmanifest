@@ -1,0 +1,10 @@
+{
+  "name": "TRAINING LOG",
+  "short_name": "TRAINING LOG",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#101827",
+  "description": "トレーニング計画・記録・週間レポート"
+}

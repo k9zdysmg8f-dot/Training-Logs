@@ -1,0 +1,5 @@
+self.addEventListener('install',e=>{self.skipWaiting()});
+self.addEventListener('activate',e=>{e.waitUntil(self.clients.claim())});
+self.addEventListener('fetch',e=>{if(e.request.method==='GET'&&new URL(e.request.url).origin===self.location.origin&&!new URL(e.request.url).pathname.startsWith('/api/')){e.respondWith(caches.open('training-log-v2').then(async c=>{let r=await c.match(e.request);if(r)return r;try{let n=await fetch(e.request);if(n.ok)c.put(e.request,n.clone());return n}catch(err){return r}}))}});
+self.addEventListener('push',e=>{let data={title:'TRAINING LOG',body:'トレーニングのお知らせです。',url:'./'};try{if(e.data)data={...data,...e.data.json()}}catch(err){if(e.data)data.body=e.data.text()}e.waitUntil(self.registration.showNotification(data.title,{body:data.body,data:{url:data.url||'./'},tag:data.tag||'training-log'}))});
+self.addEventListener('notificationclick',e=>{e.notification.close();let url=e.notification.data?.url||'./';e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{for(let c of list){if('focus'in c){c.navigate(url);return c.focus()}}return clients.openWindow(url)}))});

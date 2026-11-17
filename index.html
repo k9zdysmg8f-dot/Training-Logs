@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<link rel="manifest" href="manifest.webmanifest">
+<title>TRAINING LOG</title>
+<style>
+:root{--bg:#0b1220;--panel:#141f31;--panel2:#1b2940;--text:#f4f7fb;--muted:#aab7ca;--accent:#76d6a5;--line:#2a3a53;--danger:#ff9b9b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:22px 18px 14px;background:#101827;position:sticky;top:0;z-index:3;border-bottom:1px solid var(--line)}
+.brand{font-weight:800;letter-spacing:1.5px;font-size:19px}.sub{color:var(--muted);font-size:12px}
+main{max-width:760px;margin:auto;padding:16px 14px 100px}.tabs{display:flex;gap:7px;overflow:auto;padding:10px 14px;background:#101827;position:sticky;top:68px;z-index:2}
+.tabs button{white-space:nowrap;border:1px solid var(--line);background:var(--panel);color:var(--muted);padding:9px 13px;border-radius:20px}
+.tabs button.active{background:var(--accent);color:#092016;border-color:var(--accent);font-weight:700}
+h2{font-size:20px;margin:6px 0 14px}h3{font-size:15px;margin:0 0 10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:var(--panel2);border-radius:12px;padding:13px}.stat small{display:block;color:var(--muted)}.stat strong{font-size:24px}
+label{display:block;color:var(--muted);font-size:13px;margin:10px 0 5px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0e1828;color:var(--text);font:inherit}
+textarea{min-height:76px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button.primary,.action{background:var(--accent);color:#092016;border:0;font-weight:750;padding:11px 15px;border-radius:11px;cursor:pointer}
+button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:10px 13px;border-radius:10px}
+button.danger{background:transparent;color:var(--danger);border:1px solid #75434b;padding:7px 10px;border-radius:9px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.muted{color:var(--muted)}.item{padding:12px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}
+.pill{font-size:11px;padding:3px 8px;border-radius:20px;background:#263b50;color:var(--accent);display:inline-block}
+.progress{height:8px;background:#29384e;border-radius:8px;overflow:hidden;margin-top:8px}.progress span{display:block;height:100%;background:var(--accent)}
+.hidden{display:none!important}.notice{background:#29374a;border-left:3px solid var(--accent);padding:10px 12px;border-radius:8px;color:#dce7f5;font-size:13px}
+footer{color:var(--muted);font-size:11px;text-align:center;padding:18px}
+@media(max-width:480px){.grid{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}header{padding-top:calc(16px + env(safe-area-inset-top))}}
+</style>
+</head>
+<body>
+<header><div class="brand">TRAINING LOG</div><div class="sub">Plan · Record · Review · Race</div></header>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="home">ホーム</button><button data-tab="plan">週間計画</button><button data-tab="record">毎日の記録</button><button data-tab="weekly">週間集計</button><button data-tab="monthly">月間管理</button><button data-tab="races">レース</button><button data-tab="settings">設定</button>
+</nav>
+<main>
+<section id="home">
+<h2>ホーム</h2>
+<div class="card" id="mainRaceCard"></div>
+<div class="card" id="nextRaceCard"></div>
+<div class="grid">
+<div class="stat"><small>今週の実績距離</small><strong id="homeWeekKm">0 km</strong></div>
+<div class="stat"><small>今月の実績距離</small><strong id="homeMonthKm">0 km</strong></div>
+<div class="stat"><small>今月の練習日数</small><strong id="homeDays">0 日</strong></div>
+<div class="stat"><small>今月のポイント練習</small><strong id="homePoints">0 回</strong></div>
+</div>
+<div class="card"><h3>今日のトレーニング計画</h3><div id="todayPlan" class="muted">今日の計画はまだ登録されていません。</div><div class="actions"><button class="primary" onclick="showTab('record')">今日の結果を入力</button><button class="secondary" onclick="showTab('plan')">計画を編集</button></div></div>
+<div class="notice">記録はこの端末のブラウザ内に保存されます。ブラウザのデータ消去や端末変更に備え、定期的にバックアップしてください。</div>
+</section>
+
+<section id="plan" class="hidden">
+<h2>週間トレーニング計画</h2>
+<div class="card">
+<div class="row"><div><label>週の開始日（月曜日）</label><input type="date" id="weekStart"></div><div><label>曜日</label><select id="planDay"><option value="0">月</option><option value="1">火</option><option value="2">水</option><option value="3">木</option><option value="4">金</option><option value="5">土</option><option value="6">日</option></select></div></div>
+<label>メニュー内容</label><textarea id="planMenu" placeholder="例：ジョグ、流し、インターバルなど"></textarea>
+<div class="row"><div><label>予定距離（km）</label><input type="number" id="planKm" min="0" step="0.1"></div><div><label>強度</label><select id="planIntensity"><option>低</option><option selected>中</option><option>高</option><option>休養</option></select></div></div>
+<label><input type="checkbox" id="planPoint" style="width:auto"> ポイント練習として登録</label>
+<div class="actions"><button class="primary" onclick="savePlan()">計画を保存</button></div>
+</div>
+<div class="card"><h3>この週の計画</h3><div id="planList"></div></div>
+</section>
+
+<section id="record" class="hidden">
+<h2>毎日のトレーニング記録</h2>
+<div class="card">
+<label>記録日</label><input type="date" id="recordDate">
+<label>メニュー内容</label><textarea id="recordMenu" placeholder="実施した練習内容"></textarea>
+<div class="row"><div><label>距離（km）</label><input type="number" id="recordKm" min="0" step="0.1"></div><div><label>強度</label><select id="recordIntensity"><option>低</option><option selected>中</option><option>高</option><option>休養</option></select></div></div>
+<div class="row"><div><label>疲労度（1〜5）</label><select id="fatigue"><option value="1">1・低い</option><option value="2">2</option><option value="3" selected>3・普通</option><option value="4">4</option><option value="5">5・高い</option></select></div><div><label>ポイント練習</label><select id="recordPoint"><option value="no">該当しない</option><option value="yes">ポイント練習</option></select></div></div>
+<div class="row"><div><label>就寝時間</label><input type="time" id="sleep"></div><div><label>起床時間</label><input type="time" id="wake"></div></div>
+<label>コメント</label><textarea id="comment" placeholder="体調、気づいたこと、練習の感想など"></textarea>
+<div class="actions"><button class="primary" onclick="saveRecord()">記録を保存</button><button class="secondary" onclick="clearRecordForm()">入力をクリア</button></div>
+</div>
+<div class="card"><h3>最近の記録</h3><div id="recentRecords"></div></div>
+</section>
+
+<section id="weekly" class="hidden">
+<h2>週間集計</h2>
+<div class="card"><label>集計する週（月曜日）</label><input type="date" id="weeklyDate" onchange="renderWeekly()"><div id="weeklyStats"></div><div class="actions"><button class="secondary" onclick="saveWeeklyReport(monday(weeklyDate.value),true)">この週のレポートを保存</button></div></div>
+<div class="card"><h3>保存済み週間レポート</h3><div id="weeklyArchive" class="muted">レポートはまだありません。</div></div>
+</section>
+
+<section id="monthly" class="hidden">
+<h2>月間目標・振り返り</h2>
+<div class="card"><label>対象月</label><input type="month" id="monthSelect" onchange="renderMonthly()"><h3 style="margin-top:15px">月間目標</h3>
+<div class="row"><div><label>走行距離（km）</label><input type="number" id="goalKm" min="0" step="0.1"></div><div><label>練習日数（日）</label><input type="number" id="goalDays" min="0"></div></div>
+<label>ポイント練習の回数</label><input type="number" id="goalPoints" min="0">
+<div class="actions"><button class="primary" onclick="saveGoals()">目標を保存</button><button class="secondary" onclick="suggestGoals()">前月実績から目標を提案</button></div>
+<div id="goalStats"></div></div>
+<div class="card"><h3>月間振り返り</h3>
+<label>今月できたこと</label><textarea id="reviewGood"></textarea>
+<label>うまくいかなかったこと</label><textarea id="reviewBad"></textarea>
+<label>疲労やコンディションについて</label><textarea id="reviewCondition"></textarea>
+<label>来月改善したいこと</label><textarea id="reviewImprove"></textarea>
+<label>来月の目標</label><textarea id="reviewNext"></textarea>
+<button class="primary" onclick="saveReview()">振り返りを保存</button></div>
+</section>
+
+<section id="races" class="hidden">
+<h2>レース管理</h2>
+<div class="card"><h3 id="raceFormTitle">レースを追加</h3><input type="hidden" id="raceId">
+<label>大会名</label><input id="raceName" placeholder="大会名">
+<div class="row"><div><label>開催日</label><input type="date" id="raceDate"></div><div><label>種目</label><select id="raceEvent"><option>1500m</option><option>3000m</option><option>5000m</option><option selected>10000m</option><option>ハーフマラソン</option><option>フルマラソン</option><option>その他</option></select></div></div>
+<div class="row"><div><label>目標タイム</label><input id="raceTarget" placeholder="例：33:30"></div><div><label>目標順位（任意）</label><input id="raceRank" placeholder="例：入賞"></div></div>
+<div class="row"><div><label>重要度</label><select id="racePriority"><option value="main">メインレース</option><option value="sub">サブレース</option><option value="practice">練習レース</option></select></div><div><label>実際のタイム</label><input id="raceActual" placeholder="例：33:45"></div></div>
+<label>レース後の振り返り</label><textarea id="raceReview"></textarea>
+<div class="actions"><button class="primary" onclick="saveRace()">レースを保存</button><button class="secondary" onclick="resetRaceForm()">新規入力</button></div></div>
+<div class="card"><h3>登録済みレース</h3><div id="raceList"></div></div>
+</section>
+
+<section id="settings" class="hidden">
+<h2>設定・データ管理</h2>
+<div class="card"><h3>自動通知・週間レポート</h3><p class="muted">iPhoneでホーム画面に追加したアプリから通知を許可してください。自動配信を有効にするには、HTTPSで公開したアプリと通知サーバーの接続が必要です。</p><div id="pushStatus" class="notice">通知サーバーの接続状態を確認しています。</div><div class="actions"><button class="primary" onclick="enablePush()">この端末で通知を有効にする</button><button class="secondary" onclick="syncNow()">データを同期</button></div></div>
+<div class="card"><h3>リマインド希望時刻</h3><p class="muted">時刻を保存すると通知サーバーに同期されます。</p>
+<label>毎朝：今日の計画</label><input type="time" id="morningTime" value="07:00">
+<label>毎晩：結果入力</label><input type="time" id="nightTime" value="21:00">
+<label>日曜日：週間集計・次週計画</label><input type="time" id="sundayTime" value="12:00">
+<button class="primary" onclick="saveSettings()">時刻を保存</button></div>
+<div class="card"><h3>バックアップ</h3><p class="muted">記録・計画・目標・レースをJSONファイルに書き出せます。</p><div class="actions"><button class="primary" onclick="exportData()">バックアップを書き出す</button><label class="secondary" style="display:inline-block">バックアップを読み込む<input type="file" id="importFile" accept="application/json" onchange="importData(event)" style="display:none"></label></div></div>
+</section>
+<footer>TRAINING LOG · ローカル保存版</footer>
+</main>
+<script>
+const KEY='trainingLog_v1';
+let db=load();
+function blank(){return {plans:{},records:{},goals:{},reviews:{},races:[],weeklyReports:[],settings:{morning:'07:00',night:'21:00',sunday:'12:00'}}}
+function load(){try{return {...blank(),...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return blank()}}
+function persist(){localStorage.setItem(KEY,JSON.stringify(db));renderAll();syncNow(false)}
+function iso(d){return d.toISOString().slice(0,10)}
+function parseDate(s){return new Date(s+'T12:00:00')}
+function monday(s){let d=parseDate(s||iso(new Date()));d.setDate(d.getDate()-(d.getDay()+6)%7);return iso(d)}
+function addDays(s,n){let d=parseDate(s);d.setDate(d.getDate()+n);return iso(d)}
+function monthKey(s){return s.slice(0,7)}
+function recordsBetween(a,b){return Object.values(db.records).filter(r=>r.date>=a&&r.date<=b)}
+function sum(arr,k){return arr.reduce((a,x)=>a+(Number(x[k])||0),0)}
+function showTab(id){document.querySelectorAll('main section').forEach(x=>x.classList.add('hidden'));document.getElementById(id).classList.remove('hidden');document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));if(id==='home')renderHome();if(id==='plan')renderPlans();if(id==='record')renderRecords();if(id==='weekly')renderWeekly();if(id==='monthly')renderMonthly();if(id==='races')renderRaces()}
+document.getElementById('tabs').addEventListener('click',e=>{let b=e.target.closest('button[data-tab]');if(b)showTab(b.dataset.tab)});
+function init(){
+let today=iso(new Date()),wk=monday(today);
+weekStart.value=wk;weeklyDate.value=wk;recordDate.value=today;monthSelect.value=today.slice(0,7);raceDate.value=today;
+morningTime.value=db.settings.morning;nightTime.value=db.settings.night;sundayTime.value=db.settings.sunday;
+renderAll();renderWeeklyArchive();if('serviceWorker'in navigator&&location.protocol.startsWith('https'))navigator.serviceWorker.register('./sw.js').catch(()=>{});fetchReports();
+}
+function renderAll(){renderHome();renderPlans();renderRecords();renderWeekly();renderWeeklyArchive();renderMonthly();renderRaces()}
+function renderHome(){
+let today=iso(new Date()),w=monday(today),week=recordsBetween(w,addDays(w,6)),month=recordsBetween(today.slice(0,7)+'-01',today.slice(0,7)+'-31');
+homeWeekKm.textContent=sum(week,'km').toFixed(1)+' km';homeMonthKm.textContent=sum(month,'km').toFixed(1)+' km';homeDays.textContent=month.filter(r=>Number(r.km)>0||r.intensity!=='休養').length+' 日';homePoints.textContent=month.filter(r=>r.point).length+' 回';
+let p=db.plans[today];todayPlan.innerHTML=p?`${esc(p.menu)}<br><span class="muted">${p.km} km · ${esc(p.intensity)}${p.point?' · ポイント練習':''}</span>`:'今日の計画はまだ登録されていません。';
+let main=db.races.filter(r=>r.priority==='main'&&r.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0];
+mainRaceCard.innerHTML=main?`<span class="pill">メインレース</span><h3 style="margin-top:9px">${esc(main.name)}</h3><div class="muted">${esc(main.event)} · ${main.date}</div><strong style="font-size:27px">${daysUntil(main.date)}日</strong><div class="muted">メインレースまで</div>`:'<h3>メインレース</h3><div class="muted">メインレースが登録されていません。</div>';
+let next=db.races.filter(r=>r.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0];
+nextRaceCard.innerHTML=next?`<span class="pill">次の出場レース</span><h3 style="margin-top:9px">${esc(next.name)}</h3><div>${esc(next.event)} · ${next.date}</div><strong>${daysUntil(next.date)}日後</strong>`:'<h3>次の出場レース</h3><div class="muted">今後のレースは登録されていません。</div>';
+}
+function daysUntil(s){return Math.max(0,Math.ceil((parseDate(s)-parseDate(iso(new Date())))/86400000))}
+function savePlan(){let d=addDays(weekStart.value,Number(planDay.value));db.plans[d]={date:d,menu:planMenu.value,km:Number(planKm.value)||0,intensity:planIntensity.value,point:planPoint.checked};persist();planMenu.value='';planKm.value='';planPoint.checked=false}
+function renderPlans(){let w=weekStart.value||monday(iso(new Date()));let html='';for(let i=0;i<7;i++){let d=addDays(w,i),p=db.plans[d];html+=`<div class="item"><b>${'月火水木金土日'[i]} · ${d}</b>${p?`<div>${esc(p.menu)}<br><span class="muted">${p.km} km · ${esc(p.intensity)}${p.point?' · ポイント':''}</span></div><button class="danger" onclick="deletePlan('${d}')">削除</button>`:'<div class="muted">未登録</div>'}</div>`}planList.innerHTML=html}
+function deletePlan(d){delete db.plans[d];persist()}
+function saveRecord(){let d=recordDate.value;if(!d)return;db.records[d]={date:d,menu:recordMenu.value,km:Number(recordKm.value)||0,intensity:recordIntensity.value,fatigue:Number(fatigue.value),point:recordPoint.value==='yes',sleep:sleep.value,wake:wake.value,comment:comment.value};persist();clearRecordForm()}
+function clearRecordForm(){recordMenu.value='';recordKm.value='';recordIntensity.value='中';fatigue.value='3';recordPoint.value='no';sleep.value='';wake.value='';comment.value=''}
+function renderRecords(){let arr=Object.values(db.records).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);recentRecords.innerHTML=arr.length?arr.map(r=>`<div class="item"><b>${r.date}</b> · ${r.km} km · ${esc(r.intensity)}${r.point?' · ポイント練習':''}<div class="muted">${esc(r.menu)} · 疲労度 ${r.fatigue}/5</div>${r.comment?`<div>${esc(r.comment)}</div>`:''}<button class="danger" onclick="deleteRecord('${r.date}')">削除</button></div>`).join(''):'<span class="muted">記録はまだありません。</span>'}
+function deleteRecord(d){delete db.records[d];persist()}
+function buildWeeklyReport(w){let end=addDays(w,6),arr=recordsBetween(w,end),planned=Array.from({length:7},(_,i)=>db.plans[addDays(w,i)]).filter(Boolean),km=sum(arr,'km'),days=arr.filter(r=>Number(r.km)>0||r.intensity!=='休養').length,points=arr.filter(r=>r.point).length,avg=arr.length?(sum(arr,'fatigue')/arr.length).toFixed(1):'—',sleepRows=arr.filter(r=>r.sleep&&r.wake);let sleepText=sleepRows.length?sleepRows.map(r=>`${r.date} ${r.sleep}→${r.wake}`).join(' / '):'記録なし';let plannedKm=sum(planned,'km'),actualPlanDays=planned.filter(p=>p.menu||p.km>0).length;return {weekStart:w,weekEnd:end,createdAt:new Date().toISOString(),km:Number(km.toFixed(1)),days,points,avgFatigue:avg,sleepText,plannedKm:Number(plannedKm.toFixed(1)),plannedDays:actualPlanDays,actualDays:days,records:arr.map(r=>({...r})),plan:planned.map(x=>({...x}))}}
+function saveWeeklyReport(w,notify=false){let report=buildWeeklyReport(w);db.weeklyReports=db.weeklyReports||[];let idx=db.weeklyReports.findIndex(x=>x.weekStart===w);if(idx>=0)db.weeklyReports[idx]=report;else db.weeklyReports.unshift(report);db.weeklyReports.sort((a,b)=>b.weekStart.localeCompare(a.weekStart));db.weeklyReports=db.weeklyReports.slice(0,24);localStorage.setItem(KEY,JSON.stringify(db));renderWeeklyArchive();if(notify&&'Notification'in window&&Notification.permission==='granted')new Notification('週間レポートを保存しました',{body:`${w}週：${report.km}km・${report.days}日・ポイント${report.points}回`});return report}
+function renderWeeklyArchive(){let a=db.weeklyReports||[];weeklyArchive.innerHTML=a.length?a.map(r=>`<div class="item"><b>${r.weekStart}〜${r.weekEnd}</b><div>${r.km} km · ${r.days}日 · ポイント練習 ${r.points}回</div><div class="muted">平均疲労度：${r.avgFatigue} · 計画：${r.plannedKm} km / 実績：${r.km} km · 睡眠：${esc(r.sleepText||'記録なし')}</div></div>`).join(''):'レポートはまだありません。'}
+function renderWeekly(){if(!weeklyDate.value)return;let w=monday(weeklyDate.value),arr=recordsBetween(w,addDays(w,6)),km=sum(arr,'km'),days=arr.filter(r=>Number(r.km)>0||r.intensity!=='休養').length,points=arr.filter(r=>r.point).length,avg=arr.length?(sum(arr,'fatigue')/arr.length).toFixed(1):'—';weeklyStats.innerHTML=`<div class="grid"><div class="stat"><small>実績走行距離</small><strong>${km.toFixed(1)} km</strong></div><div class="stat"><small>練習日数</small><strong>${days} 日</strong></div><div class="stat"><small>ポイント練習</small><strong>${points} 回</strong></div><div class="stat"><small>平均疲労度</small><strong>${avg}</strong></div></div><h3 style="margin-top:15px">日別記録</h3>${Array.from({length:7},(_,i)=>{let d=addDays(w,i),r=db.records[d];return `<div class="item"><b>${'月火水木金土日'[i]} ${d}</b><div class="muted">${r?`${r.km} km · ${esc(r.menu)} · 疲労度 ${r.fatigue}/5`:'記録なし'}</div></div>`}).join('')}`}
+function monthRecords(m){return recordsBetween(m+'-01',m+'-31')}
+function renderMonthly(){if(!monthSelect.value)return;let m=monthSelect.value,arr=monthRecords(m),g=db.goals[m]||{km:0,days:0,points:0},rv=db.reviews[m]||{};goalKm.value=g.km||'';goalDays.value=g.days||'';goalPoints.value=g.points||'';reviewGood.value=rv.good||'';reviewBad.value=rv.bad||'';reviewCondition.value=rv.condition||'';reviewImprove.value=rv.improve||'';reviewNext.value=rv.next||'';let km=sum(arr,'km'),days=arr.filter(r=>Number(r.km)>0||r.intensity!=='休養').length,pts=arr.filter(r=>r.point).length;goalStats.innerHTML=`<h3 style="margin-top:16px">目標達成状況</h3>${metric('走行距離',km,g.km,'km')}${metric('練習日数',days,g.days,'日')}${metric('ポイント練習',pts,g.points,'回')}<p class="muted">実績は毎日の記録から自動集計されます。</p>`}
+function metric(name,val,goal,unit){let pct=goal?Math.min(100,val/goal*100):0;return `<div class="item"><b>${name}</b><div>${val.toFixed?val.toFixed(1):val} / ${goal||'未設定'} ${unit}</div><div class="progress"><span style="width:${pct}%"></span></div><small class="muted">${goal?Math.round(val/goal*100)+'%':'目標を設定してください'}</small></div>`}
+function saveGoals(){db.goals[monthSelect.value]={km:Number(goalKm.value)||0,days:Number(goalDays.value)||0,points:Number(goalPoints.value)||0};persist()}
+function suggestGoals(){let d=parseDate(monthSelect.value+'-01');d.setMonth(d.getMonth()-1);let m=iso(d).slice(0,7),a=monthRecords(m);goalKm.value=sum(a,'km').toFixed(1);goalDays.value=a.filter(r=>Number(r.km)>0||r.intensity!=='休養').length;goalPoints.value=a.filter(r=>r.point).length}
+function saveReview(){db.reviews[monthSelect.value]={good:reviewGood.value,bad:reviewBad.value,condition:reviewCondition.value,improve:reviewImprove.value,next:reviewNext.value};persist();alert('振り返りを保存しました。')}
+function saveRace(){let id=raceId.value||String(Date.now()),r={id,name:raceName.value.trim(),date:raceDate.value,event:raceEvent.value,target:raceTarget.value,rank:raceRank.value,priority:racePriority.value,actual:raceActual.value,review:raceReview.value};if(!r.name||!r.date){alert('大会名と開催日を入力してください。');return}if(r.priority==='main')db.races.forEach(x=>{if(x.id!==id)x.priority='sub'});let i=db.races.findIndex(x=>x.id===id);if(i>=0)db.races[i]=r;else db.races.push(r);resetRaceForm();persist()}
+function renderRaces(){let a=[...db.races].sort((x,y)=>x.date.localeCompare(y.date));raceList.innerHTML=a.length?a.map(r=>`<div class="item"><span class="pill">${r.priority==='main'?'メインレース':r.priority==='sub'?'サブレース':'練習レース'}</span><h3 style="margin-top:7px">${esc(r.name)}</h3><div>${r.date} · ${esc(r.event)} · ${r.target?'目標 '+esc(r.target):'目標未設定'}</div>${r.actual?`<div>結果：${esc(r.actual)}</div>`:''}${r.review?`<div class="muted">${esc(r.review)}</div>`:''}<div class="actions"><button class="secondary" onclick="editRace('${r.id}')">編集</button><button class="danger" onclick="deleteRace('${r.id}')">削除</button></div></div>`).join(''):'<span class="muted">レースはまだ登録されていません。</span>'}
+function editRace(id){let r=db.races.find(x=>x.id===id);if(!r)return;raceId.value=r.id;raceName.value=r.name;raceDate.value=r.date;raceEvent.value=r.event;raceTarget.value=r.target;raceRank.value=r.rank;racePriority.value=r.priority;raceActual.value=r.actual;raceReview.value=r.review;raceFormTitle.textContent='レースを編集';window.scrollTo({top:0,behavior:'smooth'})}
+function resetRaceForm(){raceId.value='';raceName.value='';raceDate.value=iso(new Date());raceEvent.value='10000m';raceTarget.value='';raceRank.value='';racePriority.value='sub';raceActual.value='';raceReview.value='';raceFormTitle.textContent='レースを追加'}
+function deleteRace(id){if(confirm('このレースを削除しますか？')){db.races=db.races.filter(r=>r.id!==id);persist()}}
+function saveSettings(){db.settings={...db.settings,morning:morningTime.value,night:nightTime.value,sunday:sundayTime.value};persist();alert('通知時刻を保存しました。')}
+const API_BASE='';let pushConfig=null;
+async function api(path,opts={}){let r=await fetch(API_BASE+path,{...opts,headers:{'Content-Type':'application/json',...(opts.headers||{})}});if(!r.ok)throw new Error(`API ${r.status}`);return r.json()}
+async function syncNow(show=true){try{let reg=await navigator.serviceWorker?.getRegistration();let sub=await reg?.pushManager?.getSubscription();if(!sub){if(show)pushStatus.textContent='通知を有効にするとデータ同期が開始されます。';return}await api('/api/sync',{method:'POST',body:JSON.stringify({db,subscription:sub.toJSON(),timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Tokyo'})});if(show)pushStatus.textContent='データを通知サーバーへ同期しました。'}catch(e){if(show)pushStatus.textContent='通知サーバー未接続です。サーバー公開後に同期できます。'}}
+function b64ToBytes(s){let p='='.repeat((4-s.length%4)%4),raw=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
+async function enablePush(){try{if(!('serviceWorker'in navigator)||!('PushManager'in window)||!('Notification'in window))throw new Error('この環境はプッシュ通知に対応していません。');if(!location.protocol.startsWith('https'))throw new Error('通知にはHTTPSで公開されたURLが必要です。');let permission=await Notification.requestPermission();if(permission!=='granted')throw new Error('通知が許可されませんでした。iPhoneの設定を確認してください。');let cfg=await api('/api/config');pushConfig=cfg;let reg=await navigator.serviceWorker.register('./sw.js');let sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToBytes(cfg.publicKey)});await api('/api/subscribe',{method:'POST',body:JSON.stringify({subscription:sub.toJSON(),settings:db.settings,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Tokyo'})});await syncNow(false);pushStatus.textContent='この端末の通知を有効にしました。朝・夜・日曜の通知を受け取れます。';}catch(e){pushStatus.textContent='通知設定を完了できませんでした：'+e.message}}
+async function fetchReports(){try{let reg=await navigator.serviceWorker?.getRegistration();let sub=await reg?.pushManager?.getSubscription();if(!sub)return;let x=await fetch('/api/reports',{headers:{'x-push-endpoint':sub.endpoint}}).then(r=>{if(!r.ok)throw new Error('reports unavailable');return r.json()});let known=new Set((db.weeklyReports||[]).map(r=>r.weekStart));for(let r of (x.reports||[])){if(!known.has(r.weekStart))db.weeklyReports.unshift(r)}db.weeklyReports.sort((a,b)=>b.weekStart.localeCompare(a.weekStart));db.weeklyReports=db.weeklyReports.slice(0,24);localStorage.setItem(KEY,JSON.stringify(db));renderWeeklyArchive()}catch(e){}}
+function exportData(){let blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='training-log-backup.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(e){let f=e.target.files[0];if(!f)return;let reader=new FileReader();reader.onload=()=>{try{db={...blank(),...JSON.parse(reader.result)};persist();alert('バックアップを読み込みました。')}catch(err){alert('ファイルを読み込めませんでした。')}};reader.readAsText(f)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+init();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>
