@@ -37,7 +37,7 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding:18px}
 <body>
 <header class="app-header"><div><div class="brand">TRAINING LOG</div><div class="sub">Plan · Record · Review · Race</div></div><button class="menu-toggle" id="menuToggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="appMenu" onclick="toggleMenu()">☰</button></header>
 <nav class="menu-panel hidden" id="appMenu" aria-label="メインメニュー">
-<button class="menu-link active" data-tab="home">ホーム</button><button class="menu-link" data-tab="plan">週間計画</button><button class="menu-link" data-tab="record">毎日の記録</button><button class="menu-link" data-tab="weekly">週間集計</button><button class="menu-link" data-tab="monthly">月間管理</button><button class="menu-link" data-tab="races">レース</button><button class="menu-link" data-tab="settings">設定</button>
+<button class="menu-link active" data-tab="home">ホーム</button><button class="menu-link" data-tab="plan">週間計画</button><button class="menu-link" data-tab="record">毎日の記録</button><button class="menu-link" data-tab="weekly">週間集計</button><button class="menu-link" data-tab="monthly">月間管理</button><button class="menu-link" data-tab="races">レース</button>
 </nav>
 <main>
 <section id="home">
@@ -115,7 +115,6 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding:18px}
 <div class="card"><h3>登録済みレース</h3><div id="raceList"></div></div>
 </section>
 
-<section id="settings" class="hidden"><h2>設定</h2><div class="card"><h3>データの保存について</h3><p class="muted">トレーニング記録・計画・目標・レース情報は、このiPhoneのブラウザ内に保存されます。ブラウザのデータを消去すると記録も消えるため、ご注意ください。</p></div></section>
 <footer>TRAINING LOG · ローカル保存版</footer>
 </main>
 <script>
