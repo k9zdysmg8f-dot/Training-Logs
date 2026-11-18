@@ -37,7 +37,7 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding:18px}
 <body>
 <header class="app-header"><button class="brand brand-button" type="button" onclick="showTab('home')" aria-label="ホームに戻る"><span>TRAINING LOG</span><span class="sub">Plan · Record · Review · Race</span></button><button class="menu-toggle" id="menuToggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="appMenu" onclick="toggleMenu()">☰</button></header>
 <nav class="menu-panel hidden" id="appMenu" aria-label="メインメニュー">
-<button class="menu-link active" data-tab="home">ホーム</button><button class="menu-link" data-tab="plan">週間計画</button><button class="menu-link" data-tab="record">毎日の記録</button><button class="menu-link" data-tab="weekly">週間集計</button><button class="menu-link" data-tab="monthly">月間管理</button><button class="menu-link" data-tab="races">レース</button>
+<button class="menu-link active" data-tab="home">ホーム</button><button class="menu-link" data-tab="plan">週間計画</button><button class="menu-link" data-tab="record">毎日の記録</button><button class="menu-link" data-tab="weekly">週間集計</button><button class="menu-link" data-tab="monthly">月間管理</button><button class="menu-link" data-tab="races">レース</button><button class="menu-link" type="button" onclick="exportBackup()">データをバックアップ</button>
 </nav>
 <main>
 <section id="home">
@@ -125,6 +125,7 @@ let db=load();
 function blank(){return {plans:{},records:{},goals:{},reviews:{},races:[],weeklyReports:[]}}
 function load(){try{return {...blank(),...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return blank()}}
 function persist(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function exportBackup(){const payload={app:'TRAINING LOG',formatVersion:1,exportedAt:new Date().toISOString(),data:db};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');const stamp=iso(new Date());a.href=url;a.download=`training-log-backup-${stamp}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);alert('バックアップファイルを作成しました。iPhoneの「ファイル」アプリに保存されたことを確認してください。練習計画・練習記録など、現在保存されているデータ全体が含まれます。')}
 function iso(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
 function parseDate(s){return new Date(s+'T12:00:00')}
 function monday(s){let d=parseDate(s||iso(new Date()));d.setDate(d.getDate()-(d.getDay()+6)%7);return iso(d)}
