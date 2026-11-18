@@ -16,9 +16,9 @@ header{padding:14px 18px;background:#101827;position:sticky;top:0;z-index:5;bord
 .menu-panel.hidden{display:none!important}
 .menu-link{padding:11px 12px;text-align:left;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--muted);font:inherit}
 .menu-link.active{background:var(--accent);color:#092016;border-color:var(--accent);font-weight:700}
-.brand{font-weight:800;letter-spacing:1.5px;font-size:19px}.sub{color:var(--muted);font-size:12px}
+.brand{font-weight:800;letter-spacing:1.5px;font-size:19px}.brand-button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:0;border:0;background:transparent;color:var(--text);cursor:pointer;text-align:left}.brand-button .sub{font-weight:400;letter-spacing:0}.sub{color:var(--muted);font-size:12px}
 main{max-width:760px;margin:auto;padding:16px 14px 100px}h2{font-size:20px;margin:6px 0 14px}h3{font-size:15px;margin:0 0 10px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin:12px 0}
+.home-date-card{display:flex;align-items:center;justify-content:space-between;gap:12px}.home-date-card strong{font-size:20px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:15px;margin:12px 0}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.stat{background:var(--panel2);border-radius:12px;padding:13px}.stat small{display:block;color:var(--muted)}.stat strong{font-size:24px}
 label{display:block;color:var(--muted);font-size:13px;margin:10px 0 5px}
 input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0e1828;color:var(--text);font:inherit}
@@ -35,13 +35,14 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding:18px}
 </style>
 </head>
 <body>
-<header class="app-header"><div><div class="brand">TRAINING LOG</div><div class="sub">Plan · Record · Review · Race</div></div><button class="menu-toggle" id="menuToggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="appMenu" onclick="toggleMenu()">☰</button></header>
+<header class="app-header"><button class="brand brand-button" type="button" onclick="showTab('home')" aria-label="ホームに戻る"><span>TRAINING LOG</span><span class="sub">Plan · Record · Review · Race</span></button><button class="menu-toggle" id="menuToggle" aria-label="メニューを開く" aria-expanded="false" aria-controls="appMenu" onclick="toggleMenu()">☰</button></header>
 <nav class="menu-panel hidden" id="appMenu" aria-label="メインメニュー">
 <button class="menu-link active" data-tab="home">ホーム</button><button class="menu-link" data-tab="plan">週間計画</button><button class="menu-link" data-tab="record">毎日の記録</button><button class="menu-link" data-tab="weekly">週間集計</button><button class="menu-link" data-tab="monthly">月間管理</button><button class="menu-link" data-tab="races">レース</button>
 </nav>
 <main>
 <section id="home">
 <h2>ホーム</h2>
+<div class="card home-date-card"><strong id="homeTodayDate"></strong><span id="homeTodayWeekday" class="muted"></span></div>
 <div class="card" id="mainRaceCard"></div>
 <div class="card" id="nextRaceCard"></div>
 <div class="grid">
@@ -58,13 +59,14 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding:18px}
 <section id="plan" class="hidden">
 <h2>週間トレーニング計画</h2>
 <div class="card">
-<div class="row"><div><label>週の開始日（月曜日）</label><input type="date" id="weekStart"></div><div><label>曜日</label><select id="planDay"><option value="0">月</option><option value="1">火</option><option value="2">水</option><option value="3">木</option><option value="4">金</option><option value="5">土</option><option value="6">日</option></select></div></div>
+<label>計画を登録する日</label><input type="date" id="planDate" onchange="syncPlanDate()"><div id="planWeekday" class="muted" aria-live="polite">曜日：—</div>
 <label>メニュー内容</label><textarea id="planMenu" placeholder="例：ジョグ、流し、インターバルなど"></textarea>
 <div class="row"><div><label>予定距離（km）</label><input type="number" id="planKm" min="0" step="0.1"></div><div><label>強度</label><select id="planIntensity"><option>低</option><option selected>中</option><option>高</option><option>休養</option></select></div></div>
 <label><input type="checkbox" id="planPoint" style="width:auto"> ポイント練習として登録</label>
+<label><input type="checkbox" id="planRace" style="width:auto"> 試合として登録</label>
 <div class="actions"><button class="primary" onclick="savePlan()">計画を保存</button></div>
 </div>
-<div class="card"><h3>この週の計画</h3><div id="planList"></div></div>
+<div class="card"><h3>週ごとの計画を見る</h3><label>表示する週（日付を選択）</label><input type="date" id="planWeek" onchange="renderPlans()"><div class="actions"><button class="secondary" onclick="changePlanWeek(-7)">前の週</button><button class="secondary" onclick="changePlanWeek(7)">次の週</button><button class="secondary" onclick="goPlanCurrentWeek()">今週</button></div><div id="planWeekLabel" class="muted"></div><div id="planList"></div></div>
 </section>
 
 <section id="record" class="hidden">
@@ -123,7 +125,7 @@ let db=load();
 function blank(){return {plans:{},records:{},goals:{},reviews:{},races:[],weeklyReports:[]}}
 function load(){try{return {...blank(),...JSON.parse(localStorage.getItem(KEY)||'{}')}}catch(e){return blank()}}
 function persist(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
-function iso(d){return d.toISOString().slice(0,10)}
+function iso(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`}
 function parseDate(s){return new Date(s+'T12:00:00')}
 function monday(s){let d=parseDate(s||iso(new Date()));d.setDate(d.getDate()-(d.getDay()+6)%7);return iso(d)}
 function addDays(s,n){let d=parseDate(s);d.setDate(d.getDate()+n);return iso(d)}
@@ -135,23 +137,32 @@ function showTab(id){document.querySelectorAll('main section').forEach(x=>x.clas
 document.getElementById('appMenu').addEventListener('click',e=>{let b=e.target.closest('button[data-tab]');if(b)showTab(b.dataset.tab)});
 function init(){
 let today=iso(new Date()),wk=monday(today);
-weekStart.value=wk;weeklyDate.value=wk;recordDate.value=today;monthSelect.value=today.slice(0,7);raceDate.value=today;
+planDate.value=today;planWeek.value=wk;weeklyDate.value=wk;recordDate.value=today;monthSelect.value=today.slice(0,7);raceDate.value=today;
+syncPlanDate();
 renderAll();renderWeeklyArchive();
 }
 function renderAll(){renderHome();renderPlans();renderRecords();renderWeekly();renderWeeklyArchive();renderMonthly();renderRaces()}
+function refreshHomeDate(){if(!document.hidden&&!home.classList.contains('hidden'))renderHome()}
+window.addEventListener('focus',refreshHomeDate);
+document.addEventListener('visibilitychange',refreshHomeDate);
 function renderHome(){
 renderPreviousResults();
 let today=iso(new Date()),w=monday(today),week=recordsBetween(w,addDays(w,6)),month=recordsBetween(today.slice(0,7)+'-01',today.slice(0,7)+'-31');
+const todayDate=parseDate(today);homeTodayDate.textContent=`${todayDate.getFullYear()}年${todayDate.getMonth()+1}月${todayDate.getDate()}日`;homeTodayWeekday.textContent=['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'][todayDate.getDay()];
 homeWeekKm.textContent=sum(week,'km').toFixed(1)+' km';homeMonthKm.textContent=sum(month,'km').toFixed(1)+' km';homeDays.textContent=month.filter(r=>Number(r.km)>0||r.intensity!=='休養').length+' 日';homePoints.textContent=month.filter(r=>r.point).length+' 回';
-let p=db.plans[today];todayPlan.innerHTML=p?`${esc(p.menu)}<br><span class="muted">${p.km} km · ${esc(p.intensity)}${p.point?' · ポイント練習':''}</span>`:'今日の計画はまだ登録されていません。';
+let p=db.plans[today];todayPlan.innerHTML=p?`${esc(p.menu)}<br><span class="muted">${p.km} km · ${esc(p.intensity)}${p.point?' · ポイント練習':''}${p.race?' · 試合':''}</span>`:'今日の計画はまだ登録されていません。';
 let main=db.races.filter(r=>r.priority==='main'&&r.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0];
 mainRaceCard.innerHTML=main?`<span class="pill">メインレース</span><h3 style="margin-top:9px">${esc(main.name)}</h3><div class="muted">${esc(main.event)} · ${main.date}</div><strong style="font-size:27px">${daysUntil(main.date)}日</strong><div class="muted">メインレースまで</div>`:'<h3>メインレース</h3><div class="muted">メインレースが登録されていません。</div>';
 let next=db.races.filter(r=>r.date>=today).sort((a,b)=>a.date.localeCompare(b.date))[0];
 nextRaceCard.innerHTML=next?`<span class="pill">次の出場レース</span><h3 style="margin-top:9px">${esc(next.name)}</h3><div>${esc(next.event)} · ${next.date}</div><strong>${daysUntil(next.date)}日後</strong>`:'<h3>次の出場レース</h3><div class="muted">今後のレースは登録されていません。</div>';
 }
 function daysUntil(s){return Math.max(0,Math.ceil((parseDate(s)-parseDate(iso(new Date())))/86400000))}
-function savePlan(){let d=addDays(weekStart.value,Number(planDay.value));db.plans[d]={date:d,menu:planMenu.value,km:Number(planKm.value)||0,intensity:planIntensity.value,point:planPoint.checked};persist();planMenu.value='';planKm.value='';planPoint.checked=false}
-function renderPlans(){let w=weekStart.value||monday(iso(new Date()));let html='';for(let i=0;i<7;i++){let d=addDays(w,i),p=db.plans[d];html+=`<div class="item"><b>${'月火水木金土日'[i]} · ${d}</b>${p?`<div>${esc(p.menu)}<br><span class="muted">${p.km} km · ${esc(p.intensity)}${p.point?' · ポイント':''}</span></div><button class="danger" onclick="deletePlan('${d}')">削除</button>`:'<div class="muted">未登録</div>'}</div>`}planList.innerHTML=html}
+function weekdayLabel(dateString){if(!dateString)return '—';return ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'][parseDate(dateString).getDay()]}
+function syncPlanDate(){if(!planDate.value)return;planWeekday.textContent='曜日：'+weekdayLabel(planDate.value);if(!planWeek.value)planWeek.value=monday(planDate.value)}
+function changePlanWeek(offset){let base=planWeek.value||monday(iso(new Date()));planWeek.value=addDays(monday(base),offset);renderPlans()}
+function goPlanCurrentWeek(){planWeek.value=monday(iso(new Date()));renderPlans()}
+function savePlan(){let d=planDate.value;if(!d){alert('計画日を選択してください。');return}db.plans[d]={...(db.plans[d]||{}),date:d,menu:planMenu.value,km:Number(planKm.value)||0,intensity:planIntensity.value,point:planPoint.checked,race:planRace.checked};persist();planMenu.value='';planKm.value='';planPoint.checked=false;planRace.checked=false;planWeek.value=monday(d);renderPlans()}
+function renderPlans(){let w=monday(planWeek.value||iso(new Date()));if(planWeek.value!==w)planWeek.value=w;let end=addDays(w,6);planWeekLabel.textContent=`${w} 〜 ${end}`;let html='';for(let i=0;i<7;i++){let d=addDays(w,i),p=db.plans[d];html+=`<div class="item"><b>${weekdayLabel(d)} · ${d}</b>${p?`<div>${esc(p.menu||'メニュー未入力')}<br><span class="muted">${Number(p.km)||0} km · ${esc(p.intensity||'未設定')}${p.point?' · ポイント練習':''}${p.race?' · 試合':''}</span></div><button class="danger" onclick="deletePlan('${d}')">削除</button>`:'<div class="muted">未登録</div>'}</div>`}planList.innerHTML=html}
 function deletePlan(d){delete db.plans[d];persist()}
 function saveRecord(){let d=recordDate.value;if(!d)return;db.records[d]={date:d,menu:recordMenu.value,km:Number(recordKm.value)||0,intensity:recordIntensity.value,fatigue:Number(fatigue.value),point:recordPoint.value==='yes',sleep:sleep.value,wake:wake.value,comment:comment.value};persist();clearRecordForm()}
 function clearRecordForm(){recordMenu.value='';recordKm.value='';recordIntensity.value='中';fatigue.value='3';recordPoint.value='no';sleep.value='';wake.value='';comment.value=''}
