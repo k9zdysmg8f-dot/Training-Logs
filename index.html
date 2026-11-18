@@ -26,7 +26,7 @@ textarea{min-height:76px;resize:vertical}.row{display:grid;grid-template-columns
 button.primary,.action{background:var(--accent);color:#092016;border:0;font-weight:750;padding:11px 15px;border-radius:11px;cursor:pointer}
 button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:10px 13px;border-radius:10px}
 button.danger{background:transparent;color:var(--danger);border:1px solid #75434b;padding:7px 10px;border-radius:9px}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.muted{color:var(--muted)}.item{padding:12px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}.week-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}.week-arrow{width:44px;height:42px;flex:0 0 44px;display:grid;place-items:center;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:11px;font-size:28px;line-height:1;cursor:pointer}.week-current{flex:1;text-align:center;font-weight:700;font-size:14px}.muted{color:var(--muted)}.item{padding:12px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0}
 .pill{font-size:11px;padding:3px 8px;border-radius:20px;background:#263b50;color:var(--accent);display:inline-block}
 .progress{height:8px;background:#29384e;border-radius:8px;overflow:hidden;margin-top:8px}.progress span{display:block;height:100%;background:var(--accent)}
 .hidden{display:none!important}.notice{background:#29374a;border-left:3px solid var(--accent);padding:10px 12px;border-radius:8px;color:#dce7f5;font-size:13px}
@@ -66,7 +66,7 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding:18px}
 <label><input type="checkbox" id="planRace" style="width:auto"> 試合として登録</label>
 <div class="actions"><button class="primary" onclick="savePlan()">計画を保存</button></div>
 </div>
-<div class="card"><h3>週ごとの計画を見る</h3><label>表示する週（日付を選択）</label><input type="date" id="planWeek" onchange="renderPlans()"><div class="actions"><button class="secondary" onclick="changePlanWeek(-7)">前の週</button><button class="secondary" onclick="changePlanWeek(7)">次の週</button><button class="secondary" onclick="goPlanCurrentWeek()">今週</button></div><div id="planWeekLabel" class="muted"></div><div id="planList"></div></div>
+<div class="card"><h3>週ごとの計画を見る</h3><div class="week-nav"><button class="week-arrow" type="button" onclick="changePlanWeek(-7)" aria-label="先週を見る">‹</button><div id="planWeekLabel" class="week-current" aria-live="polite"></div><button class="week-arrow" type="button" onclick="changePlanWeek(7)" aria-label="次週を見る">›</button></div><div class="actions"><button class="secondary" onclick="goPlanCurrentWeek()">今週に戻る</button><button class="secondary" onclick="togglePlanDatePicker()">日付から選ぶ</button></div><div id="planDatePickerWrap" class="hidden"><label>表示する週の日付</label><input type="date" id="planWeek" onchange="renderPlans()"></div><div id="planList"></div></div>
 </section>
 
 <section id="record" class="hidden">
@@ -161,6 +161,7 @@ function weekdayLabel(dateString){if(!dateString)return '—';return ['日曜日
 function syncPlanDate(){if(!planDate.value)return;planWeekday.textContent='曜日：'+weekdayLabel(planDate.value);if(!planWeek.value)planWeek.value=monday(planDate.value)}
 function changePlanWeek(offset){let base=planWeek.value||monday(iso(new Date()));planWeek.value=addDays(monday(base),offset);renderPlans()}
 function goPlanCurrentWeek(){planWeek.value=monday(iso(new Date()));renderPlans()}
+function togglePlanDatePicker(){document.getElementById('planDatePickerWrap').classList.toggle('hidden')}
 function savePlan(){let d=planDate.value;if(!d){alert('計画日を選択してください。');return}db.plans[d]={...(db.plans[d]||{}),date:d,menu:planMenu.value,km:Number(planKm.value)||0,intensity:planIntensity.value,point:planPoint.checked,race:planRace.checked};persist();planMenu.value='';planKm.value='';planPoint.checked=false;planRace.checked=false;planWeek.value=monday(d);renderPlans()}
 function renderPlans(){let w=monday(planWeek.value||iso(new Date()));if(planWeek.value!==w)planWeek.value=w;let end=addDays(w,6);planWeekLabel.textContent=`${w} 〜 ${end}`;let html='';for(let i=0;i<7;i++){let d=addDays(w,i),p=db.plans[d];html+=`<div class="item"><b>${weekdayLabel(d)} · ${d}</b>${p?`<div>${esc(p.menu||'メニュー未入力')}<br><span class="muted">${Number(p.km)||0} km · ${esc(p.intensity||'未設定')}${p.point?' · ポイント練習':''}${p.race?' · 試合':''}</span></div><button class="danger" onclick="deletePlan('${d}')">削除</button>`:'<div class="muted">未登録</div>'}</div>`}planList.innerHTML=html}
 function deletePlan(d){delete db.plans[d];persist()}
